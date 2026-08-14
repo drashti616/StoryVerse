@@ -1,0 +1,42 @@
+# .gitignore
+
+# Log files
+php-error.log
+*.log
+
+# Uploaded content (usually excluded)
+uploads/
+saved_audio/
+saved_image/
+
+# OS-specific
+.DS_Store
+Thumbs.db
+
+# IDE-specific
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Temporary files
+/tmp/
+# Ignore uploads but keep folders
+saved_audio/*
+!saved_audio/.gitkeep
+saved_image/*
+!saved_image/.gitkeep
+uploads/audio/*
+!uploads/audio/.gitkeep
+uploads/images/*
+!uploads/images/.gitkeep
+
+# Ignore DB files or logs if any
+*.log
+
+# Ignore profile pictures but keep the folder
+uploads/profile_pictures/*
+!uploads/profile_pictures/.gitkeep
+profile_pictures/*
+!profile_pictures/.gitkeep
+
