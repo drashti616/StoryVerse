@@ -31,7 +31,13 @@ $username = $_SESSION['username'] ?? 'Admin';
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="includes/responsive.css">
-    <style> 
+    <style>
+        html.sidebar-open,
+		body.sidebar-open {
+    		overflow: hidden;
+    		height: 100%;
+    		touch-action: none;
+		}
         body { 
             font-family: 'Inter', sans-serif;
         }
@@ -39,20 +45,7 @@ $username = $_SESSION['username'] ?? 'Admin';
         .modal-overlay {
             background-color: rgba(0, 0, 0, 0.75);
         }
-        /* Custom scrollbar for admin sidebar */
-        #sidebar::-webkit-scrollbar {
-            width: 6px;
-        }
-        #sidebar::-webkit-scrollbar-track {
-            background: #1f2937; /* gray-800 */
-        }
-        #sidebar::-webkit-scrollbar-thumb {
-            background: #4b5563; /* gray-600 */
-            border-radius: 3px;
-        }
-        #sidebar::-webkit-scrollbar-thumb:hover {
-            background: #6b7280; /* gray-500 */
-        }
+        
     </style>
     <script>
         // Force revalidation when page is restored from BFCache (back/forward navigation)
@@ -81,20 +74,24 @@ $username = $_SESSION['username'] ?? 'Admin';
             </div>
         </div>
     </div>
-    <header class="bg-gray-800 shadow-md p-4 sticky top-0 z-40 lg:hidden">
+    <!-- Mobile Sticky Header -->
+    <header class="bg-gray-800 shadow-md p-4 fixed top-0 left-0 right-0 z-40 lg:hidden">
         <div class="flex items-center justify-between">
             <div class="flex items-center space-x-4">
                 <button id="mobile-menu-btn" class="text-white focus:outline-none">
                     <i class="fas fa-bars text-xl"></i>
                 </button>
-                <h2 class="text-blue-500 hover:text-blue-400 text-2xl font-bold">StoryVerse</h2>
+
+                <h2 class="text-blue-500 hover:text-blue-400 text-2xl font-bold">
+                    StoryVerse
+                </h2>
             </div>
         </div>
     </header>
 
     <div class="admin-shell flex w-full max-w-full min-h-screen overflow-x-hidden">
-    <aside id="sidebar" class="admin-sidebar bg-gray-800 text-white w-64 fixed top-0 left-0 h-screen p-4 transform -translate-x-full lg:translate-x-0 transition-transform duration-300 ease-in-out z-50 overflow-y-auto">
-        <div class="flex flex-col min-h-full">
+    <aside id="sidebar" class="admin-sidebar bg-gray-800 text-white w-64 fixed top-0 left-0 h-screen p-4 transform -translate-x-full lg:translate-x-0 transition-transform duration-300 ease-in-out z-50 overflow-hidden">
+        <div class="flex flex-col min-h-full overflow-hidden">
             <h2 class="text-3xl font-bold text-blue-500 hover:text-blue-400 transition-colors text-left">StoryVerse</h2>
             <nav class="flex-grow">
                 <ul class="space-y-4">
@@ -146,8 +143,7 @@ $username = $_SESSION['username'] ?? 'Admin';
     <div id="sidebar-overlay" class="fixed inset-0 bg-black opacity-50 z-40 hidden lg:hidden"></div>
 
 <div class="admin-content-area flex flex-col flex-1 min-w-0 w-full lg:ml-64">
-        <main class="flex-1 px-4 py-6 sm:px-6 sm:py-8 lg:px-8 min-w-0 w-full admin-main-content">
-
+	<main class="flex-1 px-4 pt-24 pb-6 sm:px-6 sm:pt-24 sm:pb-8 lg:px-8 lg:pt-6 min-w-0 w-full admin-main-content">
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const mobileMenuBtn = document.getElementById('mobile-menu-btn');
@@ -204,17 +200,42 @@ $username = $_SESSION['username'] ?? 'Admin';
                 sidebar.classList.remove('-translate-x-full');
                 sidebar.classList.add('translate-x-0');
                 overlay.classList.remove('hidden');
-                // Lock body scroll when sidebar is open
-                document.body.style.overflow = 'hidden';
+
+                // Lock the entire page underneath the sidebar
+                document.documentElement.classList.add('sidebar-open');
+                document.body.classList.add('sidebar-open');
             }
 
-            function closeSidebar() {
+           function closeSidebar() {
                 sidebar.classList.remove('translate-x-0');
                 sidebar.classList.add('-translate-x-full');
                 overlay.classList.add('hidden');
-                // Unlock body scroll when sidebar is closed
-                document.body.style.overflow = '';
+
+                // Restore normal page scrolling
+                document.documentElement.classList.remove('sidebar-open');
+                document.body.classList.remove('sidebar-open');
             }
+            
+            // --- Swipe left to close sidebar on mobile ---
+            let touchStartX = 0;
+
+            sidebar.addEventListener('touchstart', (e) => {
+                if (!isLgScreen()) {
+                    touchStartX = e.changedTouches[0].screenX;
+                }
+            }, { passive: true });
+
+            sidebar.addEventListener('touchend', (e) => {
+                if (!isLgScreen()) {
+                    const touchEndX = e.changedTouches[0].screenX;
+                    const swipeDistance = touchEndX - touchStartX;
+
+                    // Close when swiped from right to left by at least 50px
+                    if (swipeDistance < -50) {
+                        closeSidebar();
+                    }
+                }
+            }, { passive: true });
 
             if (mobileMenuBtn) {
                 mobileMenuBtn.addEventListener('click', openSidebar);
@@ -235,16 +256,19 @@ $username = $_SESSION['username'] ?? 'Admin';
 
             // Add a resize event listener to handle changes in screen size
             window.addEventListener('resize', () => {
-                if (isLgScreen()) {
-                    sidebar.classList.remove('-translate-x-full');
-                    sidebar.classList.add('translate-x-0');
-                    overlay.classList.add('hidden');
-                    document.body.style.overflow = '';
-                } else {
-                    // Always reset sidebar when switching to mobile width
-                    closeSidebar();
-                }
-            });
+            if (isLgScreen()) {
+                sidebar.classList.remove('-translate-x-full');
+                sidebar.classList.add('translate-x-0');
+                overlay.classList.add('hidden');
+
+                // Ensure page scrolling is restored on desktop
+                document.documentElement.classList.remove('sidebar-open');
+                document.body.classList.remove('sidebar-open');
+            } else {
+                // Reset sidebar and scrolling when switching to mobile
+                closeSidebar();
+            }
+        });
 
             // Highlight the active sidebar link
             const currentPage = window.location.pathname.split('/').pop() || 'admin_panel.php';
