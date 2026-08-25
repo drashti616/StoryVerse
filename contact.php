@@ -144,10 +144,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     });
 
     // Handle back button on the client-side
-    window.addEventListener('popstate', function(event) {
-        // Reload the page to ensure fresh content is loaded
-        window.location.reload();
-    });
+    window.addEventListener('pageshow', function () {
+    window.scrollTo(0, 0);
+});
 
 </script>
 
