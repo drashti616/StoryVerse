@@ -69,7 +69,7 @@ try {
                                 <th class="p-3 sm:p-4">Username</th>
                                 <th class="p-3 sm:p-4">Email</th>
                                 <th class="p-3 sm:p-4 hidden lg:table-cell">Member Since</th>
-                                <th class="p-3 sm:p-4 rounded-tr-lg text-right">Actions</th>
+                                <th class="p-3 sm:p-4 rounded-tr-lg text-left">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
