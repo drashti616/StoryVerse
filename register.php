@@ -4,6 +4,10 @@
 
 require_once 'includes/db_config.php';
 
+const USERNAME_MAX_LENGTH = 64;
+const EMAIL_MAX_LENGTH = 254;
+const PASSWORD_MAX_LENGTH = 128;
+
 $error_message = '';
 $success_message = '';
 
@@ -15,13 +19,28 @@ $confirm_password = '';
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     // Assign submitted values to variables immediately for display in form, then trim
-    $username = trim($_POST['username']);
-    $email = trim($_POST['email']);
-    $password = trim($_POST['password']);
-    $confirm_password = trim($_POST['confirm_password']);
+    $username_input = $_POST['username'] ?? '';
+$email_input = $_POST['email'] ?? '';
+$password_input = $_POST['password'] ?? '';
+$confirm_password_input = $_POST['confirm_password'] ?? '';
+
+$username = is_string($username_input) && strlen($username_input) <= USERNAME_MAX_LENGTH
+    ? trim($username_input) : '';
+$email = is_string($email_input) && strlen($email_input) <= EMAIL_MAX_LENGTH
+    ? trim($email_input) : '';
+$password = is_string($password_input) && strlen($password_input) <= PASSWORD_MAX_LENGTH
+    ? trim($password_input) : '';
+$confirm_password = is_string($confirm_password_input)
+    && strlen($confirm_password_input) <= PASSWORD_MAX_LENGTH
+    ? trim($confirm_password_input) : '';
 
     // --- Username Validation ---
-    if (empty($username)) {
+	if (!is_string($username_input) || !is_string($email_input)
+    || !is_string($password_input) || !is_string($confirm_password_input)) {
+    $error_message = "Invalid form submission.";
+} elseif (strlen($username_input) > USERNAME_MAX_LENGTH) {
+    $error_message = "Username must not exceed 64 characters.";
+} elseif (empty($username)) {
         $error_message = "Please enter a username.";
     } elseif (strlen($username) < 6) { // Added minimum length for username
         $error_message = "Username must be at least 6 characters long.";
@@ -31,8 +50,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $error_message = "Username must contain at least one lowercase letter.";
     } elseif (!preg_match('/[0-9]/', $username)) { // Require at least one number
         $error_message = "Username must contain at least one number.";
-    } elseif (!preg_match('/[!@#$%^&*()_+\-=\[\]{};\':"\\|,.<>\/?~` ]/', $username)) { // Require at least one symbol
-        $error_message = "Username must contain at least one special character.";
     } elseif (!preg_match('/^[a-z0-9!@#$%^&*()_+\-=\[\]{};\':"\\|,.<>\/?~` ]+$/', $username)) { // Only allowed characters
         $error_message = "Username contains invalid characters. Only lowercase letters, numbers, and symbols are allowed.";
     } else {
@@ -53,8 +70,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     // --- Email Validation ---
     if (empty($error_message)) { // Only proceed if no username error
-        if (empty($email)) {
-            $error_message = "Please enter an email.";
+        if (strlen($email_input) > EMAIL_MAX_LENGTH) {
+    $error_message = "Email must not exceed 254 characters.";
+} elseif (empty($email)) {
+    $error_message = "Please enter an email.";
         } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
             $error_message = "Please enter a valid email format.";
         } else {
@@ -76,8 +95,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     // --- Password Validation ---
     if (empty($error_message)) { // Only proceed if no username or email error
-        if (empty($password) || empty($confirm_password)) {
-            $error_message = "Please fill in all password fields.";
+       if (strlen($password_input) > PASSWORD_MAX_LENGTH
+    || strlen($confirm_password_input) > PASSWORD_MAX_LENGTH) {
+    $error_message = "Passwords must not exceed 128 characters.";
+} elseif (empty($password) || empty($confirm_password)) {
+    $error_message = "Please fill in all password fields.";
         } elseif ($password !== $confirm_password) {
             $error_message = "Passwords do not match.";
         } elseif (strlen($password) < 8) {
@@ -148,12 +170,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         <form action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>" method="post" class="space-y-4" onsubmit="return validateForm()" autocomplete="off">
             <div>
                 <label for="username" class="block text-gray-400 mb-2">Username</label>
-                <input type="text" name="username" id="username" class="w-full bg-gray-700 text-white p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" value="<?php echo htmlspecialchars($username); ?>" autocomplete="username" required>
+                <input type="text" name="username" id="username" class="w-full bg-gray-700 text-white p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" value="<?php echo htmlspecialchars($username); ?>" autocomplete="username" maxlength="64" required>
                 <div id="username-feedback" class="text-sm mt-1"></div> <!-- Feedback for username strength -->
             </div>
             <div>
                 <label for="email" class="block text-gray-400 mb-2">Email</label>
-                <input type="email" name="email" id="email" class="w-full bg-gray-700 text-white p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" value="<?php echo htmlspecialchars($email); ?>" autocomplete="email" required>
+                <input type="email" name="email" id="email" class="w-full bg-gray-700 text-white p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" value="<?php echo htmlspecialchars($email); ?>" autocomplete="email" maxlength="254" required>
                 <div id="email-feedback" class="text-sm mt-1"></div> <!-- Feedback for email validation -->
             </div>
             <div>
@@ -166,7 +188,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             id="password"
             class="w-full bg-gray-700 text-white p-3 pr-12 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             autocomplete="new-password"
-            required>
+            maxlength="128" required>
 
         <button type="button"
                 id="togglePassword"
@@ -189,7 +211,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             id="confirm_password"
             class="w-full bg-gray-700 text-white p-3 pr-12 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             autocomplete="new-password"
-            required>
+            maxlength="128" required>
 
         <button type="button"
                 id="toggleConfirmPassword"
@@ -228,7 +250,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 });
             }
             window.addEventListener('pageshow', function() { clearAllFormFields(); });
-            document.addEventListener('DOMContentLoaded', function() { clearAllFormFields(); });
         })();
         // Client-side username strength validation
         function validateUsernameStrength(username) {
@@ -237,7 +258,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 noUppercase: !/[A-Z]/.test(username),
                 lowercase: /[a-z]/.test(username),
                 number: /[0-9]/.test(username),
-                symbol: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?~` ]/.test(username),
                 validChars: /^[a-z0-9!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?~` ]+$/.test(username)
             };
 
@@ -246,11 +266,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             if (!checks.noUppercase) feedback.push('No uppercase letters');
             if (!checks.lowercase) feedback.push('One lowercase letter');
             if (!checks.number) feedback.push('One number');
-            if (!checks.symbol) feedback.push('One symbol');
             if (!checks.validChars && username.length > 0) feedback.push('Only lowercase letters, numbers, and symbols');
 
             return {
-                isValid: checks.length && checks.noUppercase && checks.lowercase && checks.number && checks.symbol && checks.validChars,
+                isValid: checks.length && checks.noUppercase && checks.lowercase && checks.number && checks.validChars,
                 feedback: feedback.join(', ')
             };
         }
@@ -471,6 +490,64 @@ toggleConfirmPassword.addEventListener("click", function () {
     }
 
 });
-         </script>
+
+	function addLengthMessage(inputId, maxLength) {
+    const input = document.getElementById(inputId);
+
+    if (!input) return;
+
+    // Find the outer field container
+    const relativeWrapper = input.closest('.relative');
+    const fieldContainer = relativeWrapper
+        ? relativeWrapper.parentElement
+        : input.parentElement;
+
+    // Create character counter
+    const message = document.createElement('div');
+
+    message.className = 'text-sm mt-1 text-gray-400';
+    message.style.display = 'none';
+
+    // Put counter directly below the field
+    fieldContainer.appendChild(message);
+
+    function updateMessage() {
+        const length = input.value.length;
+
+        message.textContent = `${length}/${maxLength} characters`;
+
+        if (length >= maxLength) {
+            message.textContent += ' — Maximum limit reached.';
+            message.className = 'text-sm mt-1 text-red-400';
+        } else {
+            message.className = 'text-sm mt-1 text-gray-400';
+        }
+    }
+
+    // Show counter when field is selected/focused
+    input.addEventListener('focus', function () {
+        updateMessage();
+        message.style.display = 'block';
+    });
+
+    // Update counter while typing
+    input.addEventListener('input', function () {
+        updateMessage();
+    });
+
+    // Hide counter when leaving the field
+    input.addEventListener('blur', function () {
+        message.style.display = 'none';
+    });
+
+    // Initial state: hidden
+    updateMessage();
+    message.style.display = 'none';
+}
+        
+addLengthMessage('username', 64);
+addLengthMessage('email', 254);
+addLengthMessage('password', 128);
+     </script>
 </body>
 </html>
