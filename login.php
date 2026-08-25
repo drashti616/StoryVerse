@@ -14,6 +14,9 @@ require_once 'includes/db_config.php';
 // Start the session
 session_start();
 
+const LOGIN_IDENTIFIER_MAX_LENGTH = 254;
+const LOGIN_PASSWORD_MAX_LENGTH = 128;
+
 // Handle 'Continue as Guest' login
 if (isset($_GET['action']) && $_GET['action'] === 'guest') {
     // Set a guest session variable
@@ -35,12 +38,28 @@ if (isset($_SESSION['user_id'])) {
 $error_message = '';
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $identifier = trim($_POST['identifier']); // Can be username or email
-    $password = trim($_POST['password']);
+    $identifier_input = $_POST['identifier'] ?? '';
+$password_input = $_POST['password'] ?? '';
 
-    if (empty($identifier) || empty($password)) {
-        $error_message = "Please fill in all fields.";
-    } else {
+$identifier = is_string($identifier_input)
+    && strlen($identifier_input) <= LOGIN_IDENTIFIER_MAX_LENGTH
+    ? trim($identifier_input)
+    : '';
+
+$password = is_string($password_input)
+    && strlen($password_input) <= LOGIN_PASSWORD_MAX_LENGTH
+    ? trim($password_input)
+    : '';
+
+if (!is_string($identifier_input) || !is_string($password_input)) {
+    $error_message = "Invalid form submission.";
+} elseif (strlen($identifier_input) > LOGIN_IDENTIFIER_MAX_LENGTH) {
+    $error_message = "Username or email must not exceed 254 characters.";
+} elseif (strlen($password_input) > LOGIN_PASSWORD_MAX_LENGTH) {
+    $error_message = "Password must not exceed 128 characters.";
+} elseif (empty($identifier) || empty($password)) {
+    $error_message = "Please fill in all fields.";
+} else {
         $login_successful = false;
 
         // Step 1: Check the 'users' table
@@ -132,7 +151,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         <form action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>" method="post" class="space-y-4" autocomplete="off">
             <div>
                 <label for="identifier" class="block text-gray-400 mb-2">Username or Email</label>
-                <input type="text" name="identifier" id="identifier" class="w-full bg-gray-700 text-white p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" autocomplete="username" required>
+                <input type="text" name="identifier" id="identifier" class="w-full bg-gray-700 text-white p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" autocomplete="username" maxlength="254" required>
             </div>
            <div>
     <label for="password" class="block text-gray-400 mb-2">Password</label>
@@ -142,6 +161,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             type="password"
             name="password"
             id="password"
+			maxlength="128"
             class="w-full bg-gray-700 text-white p-3 pr-12 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             autocomplete="current-password"
             required>
@@ -187,7 +207,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     }
                 });
             }
-            window.addEventListener('pageshow', function() { clearAllFormFields(); });
             document.addEventListener('DOMContentLoaded', function() { clearAllFormFields(); });
         })();
     </script>
