@@ -18,6 +18,7 @@ header("Expires: 0");
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Audiobook Platform</title>
@@ -49,13 +50,11 @@ header("Expires: 0");
         }
     </style>
     <script>
-        // Ensure that if this page is restored from the back/forward cache after logout,
-        // it immediately refreshes to re-check authentication (no manual F5 required).
-        window.addEventListener('pageshow', function(event) {
-            if (event.persisted) {
-                window.location.reload();
-            }
-        });
+       window.addEventListener('pageshow', function(event) {
+    if (event.persisted) {
+        window.location.reload();
+    }
+});
     </script>
 </head>
 <body class="bg-gray-900 text-gray-300 overflow-x-hidden">
@@ -77,7 +76,7 @@ header("Expires: 0");
         </div>
     </div>
     <!-- Desktop Header -->
-    <header class="bg-gray-800 shadow-md sticky top-0 z-50 hidden lg:block">
+    <header class="bg-gray-800 shadow-md fixed top-0 left-0 right-0 z-50 hidden lg:block">
         <nav class="container mx-auto px-4 py-3 xl:py-4 flex flex-wrap items-center justify-between gap-3 min-w-0">
            
             <h2 class="text-xl xl:text-2xl font-bold text-blue-500 hover:text-blue-400 transition-colors shrink-0">StoryVerse</h2>
@@ -94,8 +93,8 @@ header("Expires: 0");
     </header>
 
     <!-- Mobile Header -->
-    <header class="bg-gray-800 shadow-md p-4 sticky top-0 z-40 lg:hidden">
-        <div class="flex items-center justify-between">
+	<header class="bg-gray-800 shadow-md p-4 fixed top-0 left-0 right-0 z-40 lg:hidden">
+    <div class="flex items-center justify-between">
             <div class="flex items-center space-x-4">
                 <button id="mobile-menu-btn" class="text-white focus:outline-none">
                     <i class="fas fa-bars text-xl"></i>
@@ -106,7 +105,8 @@ header("Expires: 0");
     </header>
 
     <!-- Mobile Sidebar (Fixed Width - Only on Mobile) -->
-    <aside id="mobile-sidebar" class="bg-gray-800 text-white w-64 fixed top-0 left-0 h-full p-4 transform -translate-x-full transition-transform duration-300 ease-in-out z-50 lg:hidden overflow-y-auto">
+		<aside id="mobile-sidebar"
+       class="bg-gray-800 text-white w-64 fixed top-0 left-0 h-screen p-4 transform -translate-x-full transition-transform duration-300 ease-in-out z-50 lg:hidden overflow-hidden">
         <div class="flex flex-col min-h-full">
             <h2 class="text-3xl font-bold text-blue-500 hover:text-blue-400 transition-colors text-left mb-4 flex-shrink-0">StoryVerse</h2>
             <nav class="flex-grow py-2">
@@ -192,17 +192,38 @@ header("Expires: 0");
                 mobileSidebar.classList.remove('-translate-x-full');
                 mobileSidebar.classList.add('translate-x-0');
                 overlay.classList.remove('hidden');
-                // Lock body scroll when sidebar is open
+
                 document.body.style.overflow = 'hidden';
+                document.body.style.touchAction = 'none';
             }
 
-            function closeMobileSidebar() {
+           function closeMobileSidebar() {
                 mobileSidebar.classList.remove('translate-x-0');
                 mobileSidebar.classList.add('-translate-x-full');
                 overlay.classList.add('hidden');
-                // Unlock body scroll when sidebar is closed
+
                 document.body.style.overflow = '';
+                document.body.style.touchAction = '';
             }
+
+            // --- Swipe left to close mobile sidebar ---
+                let touchStartX = 0;
+                let touchEndX = 0;
+
+                mobileSidebar.addEventListener('touchstart', (e) => {
+                    touchStartX = e.changedTouches[0].screenX;
+                }, { passive: true });
+
+                mobileSidebar.addEventListener('touchend', (e) => {
+                    touchEndX = e.changedTouches[0].screenX;
+
+                    const swipeDistance = touchEndX - touchStartX;
+
+                    // Swipe from right to left
+                    if (swipeDistance < -50) {
+                        closeMobileSidebar();
+                    }
+                }, { passive: true });
 
             if (mobileMenuBtn) {
                 mobileMenuBtn.addEventListener('click', openMobileSidebar);
@@ -261,4 +282,4 @@ header("Expires: 0");
             }
         });
     </script>
-    <main class="container mx-auto px-4 py-6 sm:px-6 sm:py-8 lg:px-8 min-h-screen min-w-0 w-full max-w-7xl">
+	<main class="container mx-auto px-4 pt-24 pb-6 sm:px-6 sm:pt-24 sm:pb-8 lg:px-8 min-h-screen min-w-0 w-full max-w-7xl">
